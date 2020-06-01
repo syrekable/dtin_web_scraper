@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup as bs
 import requests
 import argparse
+import inspect
+
 from typing import Union
 from tree import Tree
 
@@ -27,37 +29,43 @@ def from_tags_to_links(tags) -> [str, ...]:
     '''
     return [tag.get('href') for tag in tags.find_all('a')]
 
-def whats_my_name(url: str):
+
+def say_my_name(url: str) -> str: ##Heisenberg!
     return url.replace(BASE_URL, '')
 
-if __name__ == "__main__":
-    r = requests.get(args.URL)
-    soup = bs(r.text, 'lxml')
 
+def main(root: Union[Tree, None], url: str):
     ##make a request, get a website from it, get the 'See also' section,
     ##make a tree object with name being the url, and adjacent nodes being
     ##articles from 'See also' section. 
-
-    root = Tree(whats_my_name(args.URL), get_see_also_section(soup))
     
-##TODO: 
-## show each individual site a tree
-## i.e. 
-## go until an empty tree (i.e. a node with no adjacent nodes) is found
-##URL { 
-##        "PURL": 
-##            {
-##                "ARK": {...},
-##                "DOI": {...},
-##                ...
-##            }, 
-##        "CURIE":
-##            {
-##               "QNAME": {}
-##            }, 
-##        "IRL": 
-##            {
-##            "URI" - STOP, COZ ITS BEEN HERE
-##            } 
-##        ...
-##    }
+
+    ##TODO: eliminate the ocurring cycle; use the Trie.existing_nodes static attribute
+    url = say_my_name(url)
+    if url in Tree.existing_nodes:
+        return None
+
+    r = requests.get(BASE_URL+url)
+    soup = bs(r.text, 'lxml')
+    Tree.mark_visited(url)
+    see_also = get_see_also_section(soup)
+
+    if see_also is None: ##it dies somehow 
+        return Tree(say_my_name(url), see_also)
+ 
+    if root is None:
+        root = Tree(say_my_name(args.URL), get_see_also_section(soup))
+
+    print(url)
+    for url in see_also:
+        branch = main(root, url)
+        if branch is None:
+            continue
+        root.add_node(branch)
+    
+    return root
+
+if __name__ == "__main__":
+    root = main(None, args.URL)
+    root.print_nodes()
+    
