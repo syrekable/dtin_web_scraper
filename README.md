@@ -10,5 +10,5 @@
 3. `pip install -r requirements.txt`
 
 ## Usage
-`python3 crawler.py 'https://en.wikipedia.org/wiki/path_to_the_article'`
-To kill the program, just `Ctrl+C` it.
+* `python3 crawler.py 'https://en.wikipedia.org/wiki/path_to_the_article'`
+* To kill the program, just `Ctrl+C` it.
